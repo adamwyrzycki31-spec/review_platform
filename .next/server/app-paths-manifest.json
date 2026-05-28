@@ -1,0 +1,20 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/api/businesses/route": "app/api/businesses/route.js",
+  "/api/reviews/route": "app/api/reviews/route.js",
+  "/robots.txt/route": "app/robots.txt/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/sitemap.xml/route": "app/sitemap.xml/route.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(auth)/signup/page": "app/(auth)/signup/page.js",
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(public)/leave-review/[businessSlug]/page": "app/(public)/leave-review/[businessSlug]/page.js",
+  "/(public)/categories/page": "app/(public)/categories/page.js",
+  "/(public)/about/page": "app/(public)/about/page.js",
+  "/(public)/categories/[slug]/page": "app/(public)/categories/[slug]/page.js",
+  "/(public)/pricing/page": "app/(public)/pricing/page.js",
+  "/(public)/search/page": "app/(public)/search/page.js",
+  "/page": "app/page.js",
+  "/(public)/business/[slug]/page": "app/(public)/business/[slug]/page.js"
+}
