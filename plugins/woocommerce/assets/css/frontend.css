@@ -1,0 +1,163 @@
+/* MyProtector WooCommerce Styles */
+
+/* Plugin container */
+.mpwc-reviews-list {
+  margin: 20px 0;
+}
+
+/* Product Badge */
+.mpwc-product-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.mpwc-product-badge.mp-badge-light {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.mpwc-product-badge.mp-badge-dark {
+  background: #1f2937;
+  color: #f9fafb;
+}
+
+.mpwc-stars {
+  color: #fbbf24;
+}
+
+.mpwc-rating {
+  font-weight: 700;
+}
+
+/* Trust Section */
+.mpwc-trust-section {
+  margin: 16px 0;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.mpwc-badge-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Filter Badge */
+.mpwc-filter-badge {
+  text-align: center;
+  padding: 8px;
+  color: #6b7280;
+  font-size: 11px;
+}
+
+/* Widget Styles */
+.mp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.mp-badge:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.mp-badge-dark {
+  background: #1f2937;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+.mp-badge-light {
+  background: white;
+  color: #111827;
+}
+
+/* Carousel Styles */
+.mp-carousel {
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.mp-carousel-item {
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.mp-carousel-stars {
+  color: #fbbf24;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.mp-carousel-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.mp-carousel-content {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Admin Settings */
+.mpwc-settings-section {
+  margin: 20px 0;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mpwc-settings-section h2 {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Form Styles */
+.mpwc-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -8px;
+}
+
+.mpwc-form-row > * {
+  padding: 0 8px;
+  flex: 1 0 200px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mp-badge {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .mp-carousel {
+    padding: 0 40px;
+  }
+
+  .mpcarousel-nav {
+    width: 32px;
+    height: 32px;
+  }
+}
