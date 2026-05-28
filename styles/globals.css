@@ -1,71 +1,73 @@
 @import "tailwindcss";
 
-/* Custom CSS Variables */
-:root {
+@theme {
   /* Brand Colors */
-  --color-primary: 34 197 94;
-  --color-primary-foreground: 255 255 255;
-  --color-secondary: 234 179 8;
-  --color-secondary-foreground: 0 0 0;
-  --color-danger: 239 68 68;
-  --color-danger-foreground: 255 255 255;
-  --color-warning: 245 158 11;
-  --color-warning-foreground: 0 0 0;
+  --color-primary: rgb(34 197 94);
+  --color-primary-foreground: rgb(255 255 255);
+  --color-secondary: rgb(234 179 8);
+  --color-secondary-foreground: rgb(0 0 0);
+  --color-danger: rgb(239 68 68);
+  --color-danger-foreground: rgb(255 255 255);
+  --color-warning: rgb(245 158 11);
+  --color-warning-foreground: rgb(0 0 0);
 
   /* Traffic Light Colors */
-  --color-trust-green: 34 197 94;
-  --color-trust-amber: 245 158 11;
-  --color-trust-red: 239 68 68;
+  --color-trust-green: rgb(34 197 94);
+  --color-trust-amber: rgb(245 158 11);
+  --color-trust-red: rgb(239 68 68);
 
   /* Neutral Colors */
-  --color-background: 255 255 255;
-  --color-foreground: 15 23 42;
-  --color-card: 255 255 255;
-  --color-card-foreground: 15 23 42;
-  --color-muted: 248 250 252;
-  --color-muted-foreground: 100 116 139;
-  --color-border: 226 232 240;
-  --color-input: 226 232 240;
+  --color-background: rgb(255 255 255);
+  --color-foreground: rgb(15 23 42);
+  --color-card: rgb(255 255 255);
+  --color-card-foreground: rgb(15 23 42);
+  --color-muted: rgb(248 250 252);
+  --color-muted-foreground: rgb(100 116 139);
+  --color-border: rgb(226 232 240);
+  --color-input: rgb(226 232 240);
 
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Plus Jakarta Sans', var(--font-sans);
 
-  /* Spacing */
+  /* Radius */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
-  --radius-full: 9999px;
 }
 
 /* Dark Mode */
 .dark {
-  --color-background: 15 23 42;
-  --color-foreground: 248 250 252;
-  --color-card: 30 41 59;
-  --color-card-foreground: 248 250 252;
-  --color-muted: 30 41 59;
-  --color-muted-foreground: 148 163 184;
-  --color-border: 51 65 85;
-  --color-input: 51 65 85;
+  --color-background: rgb(15 23 42);
+  --color-foreground: rgb(248 250 252);
+  --color-card: rgb(30 41 59);
+  --color-card-foreground: rgb(248 250 252);
+  --color-muted: rgb(30 41 59);
+  --color-muted-foreground: rgb(148 163 184);
+  --color-border: rgb(51 65 85);
+  --color-input: rgb(51 65 85);
 }
 
 /* Base Styles */
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--color-border);
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
     font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
-    @apply font-bold tracking-tight;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
 
   /* Smooth scrolling */
@@ -75,7 +77,8 @@
 
   /* Focus visible styles */
   :focus-visible {
-    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-primary);
   }
 }
 
@@ -83,7 +86,7 @@
 @layer utilities {
   /* Gradient backgrounds */
   .gradient-primary {
-    @apply bg-gradient-to-r from-primary to-emerald-400;
+    background: linear-gradient(to right, var(--color-primary), #34d399);
   }
 
   .gradient-hero {
@@ -96,42 +99,50 @@
 
   /* Trust badges */
   .trust-badge-green {
-    @apply bg-green-500 text-white;
+    background-color: rgb(34 197 94);
+    color: white;
     box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
   }
 
   .trust-badge-amber {
-    @apply bg-amber-500 text-black;
+    background-color: rgb(245 158 11);
+    color: black;
     box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
   }
 
   .trust-badge-red {
-    @apply bg-red-500 text-white;
+    background-color: rgb(239 68 68);
+    color: white;
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
   }
 
   /* Glass effect */
   .glass {
-    @apply bg-white/80 backdrop-blur-md;
+    background-color: rgb(255 255 255 / 0.8);
+    backdrop-filter: blur(12px);
   }
 
   .glass-dark {
-    @apply bg-slate-900/80 backdrop-blur-md;
+    background-color: rgb(15 23 42 / 0.8);
+    backdrop-filter: blur(12px);
   }
 
   /* Text gradient */
   .text-gradient {
-    @apply bg-clip-text text-transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
     background-image: linear-gradient(135deg, rgb(34 197 94), rgb(16 185 129));
   }
 
   /* Card hover effect */
   .card-hover {
-    @apply transition-all duration-300;
+    transition: all 0.3s ease;
   }
 
   .card-hover:hover {
-    @apply shadow-xl -translate-y-1;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    transform: translateY(-0.25rem);
   }
 
   /* Star rating */
@@ -200,15 +211,17 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-muted rounded-full;
+    background-color: var(--color-muted);
+    border-radius: 9999px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full;
+    background-color: rgb(100 116 139 / 0.3);
+    border-radius: 9999px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
+    background-color: rgb(100 116 139 / 0.5);
   }
 }
 
@@ -216,119 +229,227 @@
 
 /* Review card styles */
 .review-card {
-  @apply bg-card rounded-xl border border-border p-6 shadow-sm card-hover;
+  background-color: var(--color-card);
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.review-card.card-hover {
+  transition: all 0.3s ease;
+}
+
+.review-card.card-hover:hover {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  transform: translateY(-0.25rem);
 }
 
 /* Business card styles */
 .business-card {
-  @apply bg-card rounded-xl border border-border overflow-hidden shadow-sm card-hover;
+  background-color: var(--color-card);
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.business-card.card-hover {
+  transition: all 0.3s ease;
+}
+
+.business-card.card-hover:hover {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  transform: translateY(-0.25rem);
 }
 
 .business-card-image {
-  @apply h-48 bg-muted flex items-center justify-center;
+  height: 12rem;
+  background-color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Dashboard sidebar */
 .dashboard-sidebar {
-  @apply fixed left-0 top-0 h-screen w-64 bg-card border-r border-border z-40;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 16rem;
+  background-color: var(--color-card);
+  border-right: 1px solid var(--color-border);
+  z-index: 40;
 }
 
 /* Traffic light indicator */
 .traffic-light {
-  @apply w-12 h-12 rounded-full flex items-center justify-center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .traffic-light-green {
-  @apply bg-green-500 text-white shadow-lg;
+  background-color: rgb(34 197 94);
+  color: white;
   box-shadow: 0 0 30px rgba(34, 197, 94, 0.5);
 }
 
 .traffic-light-amber {
-  @apply bg-amber-500 text-black shadow-lg;
+  background-color: rgb(245 158 11);
+  color: black;
   box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
 }
 
 .traffic-light-red {
-  @apply bg-red-500 text-white shadow-lg;
+  background-color: rgb(239 68 68);
+  color: white;
   box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
 }
 
 /* Premium button styles */
 .btn-premium {
-  @apply relative overflow-hidden transition-all duration-300;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .btn-premium::before {
   content: '';
-  @apply absolute inset-0 bg-white/20 translate-y-full transition-transform duration-300;
+  position: absolute;
+  inset: 0;
+  background-color: rgb(255 255 255 / 0.2);
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
 }
 
 .btn-premium:hover::before {
-  @apply translate-y-0;
+  transform: translateY(0);
 }
 
 /* Form styles */
 .form-input {
-  @apply w-full px-4 py-3 rounded-lg border border-input bg-background 
-         text-foreground placeholder:text-muted-foreground
-         focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary
-         transition-all duration-200;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-input);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  transition: all 0.2s ease;
+}
+
+.form-input::placeholder {
+  color: var(--color-muted-foreground);
+}
+
+.form-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(34 197 94 / 0.5);
+  border-color: var(--color-primary);
 }
 
 .form-label {
-  @apply block text-sm font-medium text-foreground mb-2;
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-foreground);
+  margin-bottom: 0.5rem;
 }
 
 /* Table styles */
 .data-table {
-  @apply w-full text-sm;
+  width: 100%;
+  font-size: 0.875rem;
 }
 
 .data-table thead {
-  @apply bg-muted;
+  background-color: var(--color-muted);
 }
 
 .data-table th {
-  @apply px-4 py-3 text-left font-semibold text-muted-foreground;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
 }
 
 .data-table td {
-  @apply px-4 py-3 border-t border-border;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--color-border);
 }
 
-.data-table tbody tr {
-  @apply hover:bg-muted/50 transition-colors;
+.data-table tbody tr:hover {
+  background-color: rgb(248 250 252 / 0.5);
+  transition: background-color 0.15s ease;
 }
 
 /* Badge variants */
 .badge {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .badge-success {
-  @apply bg-green-100 text-green-800;
+  background-color: rgb(220 252 231);
+  color: rgb(22 101 52);
 }
 
 .badge-warning {
-  @apply bg-amber-100 text-amber-800;
+  background-color: rgb(254 252 232);
+  color: rgb(146 64 14);
 }
 
 .badge-danger {
-  @apply bg-red-100 text-red-800;
+  background-color: rgb(254 242 242);
+  color: rgb(153 27 27);
 }
 
 .badge-info {
-  @apply bg-blue-100 text-blue-800;
+  background-color: rgb(239 246 255);
+  color: rgb(30 64 175);
 }
 
 /* Skeleton loading */
 .skeleton {
-  @apply animate-pulse bg-muted rounded;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: var(--color-muted);
+  border-radius: 0.25rem;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 /* Responsive container */
 .container-app {
-  @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 80rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-app {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-app {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
 }
 
 /* Hero section */
@@ -347,15 +468,30 @@
 
 /* Widget embed preview */
 .widget-preview {
-  @apply bg-white rounded-lg shadow-lg p-4 border border-border;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  padding: 1rem;
+  border: 1px solid var(--color-border);
 }
 
 /* Admin sidebar nav */
 .nav-item {
-  @apply flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground 
-         hover:text-foreground hover:bg-muted transition-colors;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  color: var(--color-muted-foreground);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.nav-item:hover {
+  color: var(--color-foreground);
+  background-color: var(--color-muted);
 }
 
 .nav-item-active {
-  @apply bg-primary/10 text-primary;
+  background-color: rgb(34 197 94 / 0.1);
+  color: var(--color-primary);
 }

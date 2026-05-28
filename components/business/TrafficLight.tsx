@@ -103,38 +103,44 @@ export function TrafficLightBadge({ status, className }: TrafficLightBadgeProps)
 
 interface TrafficLightChecklistProps {
   signal: TrafficSignal
+  business?: {
+    insuranceUrl?: string | null
+    promisePageUrl?: string | null
+    claimPageUrl?: string | null
+    termsUrl?: string | null
+  }
   className?: string
 }
 
-export function TrafficLightChecklist({ signal, className }: TrafficLightChecklistProps) {
+export function TrafficLightChecklist({ signal, business, className }: TrafficLightChecklistProps) {
   const checks = [
     {
       key: 'hasInsurance',
       label: 'Insurance Policy',
       description: 'Company has verified insurance coverage',
       icon: Shield,
-      url: signal.business?.insuranceUrl,
+      url: business?.insuranceUrl,
     },
     {
       key: 'hasRefundPromise',
       label: 'Refund Promise',
       description: 'Company offers refund guarantee',
       icon: RefreshCw,
-      url: signal.business?.promisePageUrl,
+      url: business?.promisePageUrl,
     },
     {
       key: 'hasClaimPage',
       label: 'Claim Process',
       description: 'Company has a clear insurance claim process',
       icon: FileText,
-      url: signal.business?.claimPageUrl,
+      url: business?.claimPageUrl,
     },
     {
       key: 'hasTermsClauses',
       label: 'Terms & Conditions',
       description: 'Terms include proper clauses',
       icon: Scale,
-      url: signal.business?.termsUrl,
+      url: business?.termsUrl,
     },
     {
       key: 'hasActiveSubscription',

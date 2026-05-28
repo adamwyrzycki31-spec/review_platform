@@ -20,15 +20,15 @@ export function slug(text: string): string {
 // Generate unique slug
 export function uniqueSlug(text: string, existingSlugs: string[] = []): string {
   const baseSlug = slug(text)
-  let slug = baseSlug
+  let currentSlug = baseSlug
   let counter = 1
   
-  while (existingSlugs.includes(slug)) {
-    slug = `${baseSlug}-${counter}`
+  while (existingSlugs.includes(currentSlug)) {
+    currentSlug = `${baseSlug}-${counter}`
     counter++
   }
   
-  return slug
+  return currentSlug
 }
 
 // Format date relative
@@ -107,7 +107,7 @@ export function calculateAverageRating(ratings: number[]): number {
 
 // Get rating distribution
 export function getRatingDistribution(reviews: { rating: number }[]): Record<number, number> {
-  const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+  const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
   reviews.forEach(r => {
     if (r.rating >= 1 && r.rating <= 5) {
       distribution[r.rating]++

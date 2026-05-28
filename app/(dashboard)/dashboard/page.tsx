@@ -15,7 +15,7 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  const { role, name, email } = session.user
+  const { role, firstName, lastName, email } = session.user
 
   // Role-specific dashboard content
   const getDashboardContent = () => {
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
           <div>
             <h1 className="text-3xl font-bold">{content.title}</h1>
             <p className="text-muted-foreground mt-1">
-              Welcome back, {name || email}
+              Welcome back, {firstName || lastName || email}
             </p>
           </div>
           <div className="flex items-center gap-3">

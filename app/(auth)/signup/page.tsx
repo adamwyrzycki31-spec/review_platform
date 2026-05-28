@@ -10,7 +10,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-const roleOptions = [
+const roleOptions: Array<{
+  value: 'INDIVIDUAL' | 'BUSINESS' | 'RESELLER'
+  label: string
+  description: string
+  icon: React.ComponentType<{ className?: string }>
+}> = [
   {
     value: 'INDIVIDUAL',
     label: 'Individual',

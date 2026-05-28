@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next'
 import prisma from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://myprotector.org'
   
@@ -87,7 +89,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       take: 1000,
     })
 
-    const businessPages: MetadataRoute.Sitemap = businesses.map((business) => ({
+    const businessPages: MetadataRoute.Sitemap = (businesses as { slug: string; updatedAt: Date }[]).map((business) => ({
       url: `${baseUrl}/business/${business.slug}`,
       lastModified: business.updatedAt,
       changeFrequency: 'weekly',
@@ -103,7 +105,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       take: 100,
     })
 
-    const categoryPages: MetadataRoute.Sitemap = categories.map((category) => ({
+    const categoryPages: MetadataRoute.Sitemap = (categories as { slug: string; updatedAt: Date }[]).map((category) => ({
       url: `${baseUrl}/categories/${category.slug}`,
       lastModified: category.updatedAt,
       changeFrequency: 'weekly',
