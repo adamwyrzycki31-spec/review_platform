@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Shield, Star, Users, Building2, CheckCircle, Search, TrendingUp, Award, Globe, Lock, ChevronRight } from 'lucide-react'
+import { ArrowRight, Shield, Star, Users, Building2, CheckCircle, Search, TrendingUp, Award, Globe, Lock, ChevronRight, Scale, File } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'

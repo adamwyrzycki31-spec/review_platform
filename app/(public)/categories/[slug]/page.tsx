@@ -7,11 +7,34 @@ import { StarRating } from '@/components/reviews/StarRating'
 import prisma from '@/lib/db'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 interface CategoryPageProps {
   params: Promise<{ slug: string }>
 }
 
-async function getCategory(slug: string) {
+interface BusinessWithReviews {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  city: string | null
+  country: string | null
+  trustScore: unknown
+  trafficLightStatus: 'RED' | 'AMBER' | 'GREEN'
+  reviews: { id: string }[]
+}
+
+interface CategoryWithBusinesses {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  businesses: BusinessWithReviews[]
+  _count: { businesses: number }
+}
+
+async function getCategory(slug: string): Promise<CategoryWithBusinesses | null> {
   const category = await prisma.category.findUnique({
     where: { slug },
     include: {
@@ -30,7 +53,7 @@ async function getCategory(slug: string) {
       },
     },
   })
-  return category
+  return category as CategoryWithBusinesses | null
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {

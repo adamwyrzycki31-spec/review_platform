@@ -11,11 +11,70 @@ import { ReviewCard } from '@/components/reviews/ReviewCard'
 import prisma from '@/lib/db'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 interface BusinessPageProps {
   params: Promise<{ slug: string }>
 }
 
-async function getBusiness(slug: string) {
+interface ReviewWithUser {
+  id: string
+  userId: string
+  businessId: string
+  rating: number
+  title: string
+  content: string
+  pros: string | null
+  cons: string | null
+  recommendation: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE'
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'FLAGGED'
+  verifiedPurchase: boolean
+  helpfulCount: number
+  reportCount: number
+  createdAt: Date
+  updatedAt: Date
+  publishedAt: Date | null
+  user: { id: string; firstName: string | null; lastName: string | null; avatarUrl: string | null }
+}
+
+interface TrafficSignalData {
+  id: string
+  businessId: string
+  hasInsurance: boolean
+  hasRefundPromise: boolean
+  hasClaimPage: boolean
+  hasTermsClauses: boolean
+  hasActiveSubscription: boolean
+}
+
+interface BusinessData {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  website: string | null
+  logoUrl: string | null
+  coverImageUrl: string | null
+  address: string | null
+  city: string | null
+  country: string | null
+  phone: string | null
+  businessEmail: string | null
+  trustScore: unknown
+  reviewCount: number
+  trafficLightStatus: 'RED' | 'AMBER' | 'GREEN'
+  insuranceUrl: string | null
+  termsUrl: string | null
+  promisePageUrl: string | null
+  claimPageUrl: string | null
+  reviews: ReviewWithUser[]
+  trafficSignal: TrafficSignalData | null
+  category: { name: string } | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+async function getBusiness(slug: string): Promise<BusinessData | null> {
   const business = await prisma.business.findUnique({
     where: { slug },
     include: {
@@ -39,7 +98,7 @@ async function getBusiness(slug: string) {
     },
   })
 
-  return business
+  return business as BusinessData | null
 }
 
 export async function generateMetadata({ params }: BusinessPageProps): Promise<Metadata> {
@@ -70,10 +129,10 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
   }
 
   // Calculate rating distribution
-  const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
-  business.reviews.forEach((review) => {
+  const ratingDistribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+  business.reviews.forEach((review: ReviewWithUser) => {
     if (review.rating >= 1 && review.rating <= 5) {
-      ratingDistribution[review.rating as keyof typeof ratingDistribution]++
+      ratingDistribution[review.rating]++
     }
   })
 
@@ -155,7 +214,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
 
               {business.reviews.length > 0 ? (
                 <div className="space-y-4">
-                  {business.reviews.map((review) => (
+                  {business.reviews.map((review: ReviewWithUser) => (
                     <ReviewCard key={review.id} review={review} />
                   ))}
                 </div>
@@ -201,7 +260,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
               <Card>
                 <CardContent className="p-6">
                   <h3 className="font-semibold mb-4">Trust Verification</h3>
-                  <TrafficLightChecklist signal={business.trafficSignal} />
+                  <TrafficLightChecklist signal={business.trafficSignal} business={business} />
                 </CardContent>
               </Card>
             )}

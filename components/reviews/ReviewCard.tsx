@@ -10,10 +10,36 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { cn, timeAgo, getInitials, truncate } from '@/lib/utils'
-import type { Review, User } from '@/types'
 
 interface ReviewCardProps {
-  review: Review & { user?: User }
+  review: {
+    id: string
+    userId: string
+    businessId: string
+    rating: number
+    title: string
+    content: string
+    pros?: string | null
+    cons?: string | null
+    recommendation: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE'
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'FLAGGED'
+    verifiedPurchase: boolean
+    helpfulCount: number
+    reportCount: number
+    createdAt: Date
+    updatedAt: Date
+    publishedAt?: Date | null
+    user?: {
+      id?: string
+      firstName?: string | null
+      lastName?: string | null
+      avatarUrl?: string | null
+    }
+    business?: {
+      slug: string
+      name?: string
+    }
+  }
   showBusiness?: boolean
   showActions?: boolean
   className?: string
@@ -42,9 +68,9 @@ export function ReviewCard({ review, showBusiness = false, showActions = true, c
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <Avatar className="h-12 w-12">
-            <AvatarImage src={review.user?.avatarUrl} />
+            <AvatarImage src={review.user?.avatarUrl || undefined} />
             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-              {getInitials(review.user?.firstName, review.user?.lastName)}
+              {getInitials(review.user?.firstName || undefined, review.user?.lastName || undefined)}
             </AvatarFallback>
           </Avatar>
           <div>

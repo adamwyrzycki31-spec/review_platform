@@ -4,6 +4,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import prisma from '@/lib/db'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Categories',
   description: 'Browse businesses by category. Find trusted companies in retail, finance, technology, healthcare, and more.',
@@ -22,6 +24,15 @@ const iconMap: Record<string, typeof ShoppingBag> = {
   Briefcase,
 }
 
+interface CategoryItem {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  icon: string | null
+  _count: { businesses: number }
+}
+
 export default async function CategoriesPage() {
   const categories = await prisma.category.findMany({
     orderBy: { name: 'asc' },
@@ -30,7 +41,7 @@ export default async function CategoriesPage() {
         select: { businesses: true },
       },
     },
-  })
+  }) as CategoryItem[]
 
   return (
     <div className="bg-muted/30 py-12">

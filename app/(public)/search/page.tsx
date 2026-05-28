@@ -11,6 +11,8 @@ import { Card } from '@/components/ui/card'
 import prisma from '@/lib/db'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Search Businesses',
   description: 'Search for trusted businesses and read verified reviews on MyProtector.',
@@ -18,6 +20,20 @@ export const metadata: Metadata = {
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string; category?: string; traffic?: string }>
+}
+
+interface BusinessSearchResult {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  logoUrl: string | null
+  city: string | null
+  country: string | null
+  trustScore: unknown
+  reviewCount: number
+  trafficLightStatus: 'RED' | 'AMBER' | 'GREEN'
+  category: { name: string } | null
 }
 
 async function SearchResults({ query, category, traffic }: { query?: string; category?: string; traffic?: string }) {
@@ -45,7 +61,7 @@ async function SearchResults({ query, category, traffic }: { query?: string; cat
     },
     orderBy: { trustScore: 'desc' },
     take: 50,
-  })
+  }) as BusinessSearchResult[]
 
   const categories = await prisma.category.findMany({
     orderBy: { name: 'asc' },
@@ -133,7 +149,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const categories = await prisma.category.findMany({
     orderBy: { name: 'asc' },
-  })
+  }) as { id: string; name: string; slug: string }[]
 
   return (
     <div className="container-app py-8">

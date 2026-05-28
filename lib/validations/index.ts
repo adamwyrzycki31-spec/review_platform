@@ -22,10 +22,23 @@ export const signupSchema = z.object({
   path: ['confirmPassword'],
 })
 
-export const businessSignupSchema = signupSchema.extend({
+export const businessSignupSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+  confirmPassword: z.string(),
+  firstName: z.string().min(2, 'First name must be at least 2 characters').optional(),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters').optional(),
+  role: z.enum(['INDIVIDUAL', 'BUSINESS', 'RESELLER']),
   businessName: z.string().min(2, 'Business name must be at least 2 characters'),
   website: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
   category: z.string().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
 })
 
 export const forgotPasswordSchema = z.object({
