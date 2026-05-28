@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Star, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Star, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,14 +12,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StarRating } from '@/components/reviews/StarRating'
 import { cn } from '@/lib/utils'
 
-interface LeaveReviewPageProps {
-  params: Promise<{ businessSlug: string }>
+interface Business {
+  id: string
+  name: string
+  slug: string
+  logoUrl: string | null
 }
 
-export default function LeaveReviewPage({ params }: LeaveReviewPageProps) {
+export default function LeaveReviewPage() {
   const router = useRouter()
+  const params = useParams()
+  const businessSlug = params.businessSlug as string
+  
   const [isLoading, setIsLoading] = useState(false)
+  const [isFetchingBusiness, setIsFetchingBusiness] = useState(true)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+  const [business, setBusiness] = useState<Business | null>(null)
   const [rating, setRating] = useState(0)
   const [formData, setFormData] = useState({
     title: '',
@@ -28,8 +37,28 @@ export default function LeaveReviewPage({ params }: LeaveReviewPageProps) {
     cons: '',
   })
 
-  // In a real app, you'd fetch the business details
-  const businessName = "TechCorp Solutions" // This would come from the API
+  // Fetch business details
+  useEffect(() => {
+    async function fetchBusiness() {
+      try {
+        const response = await fetch(`/api/businesses?slug=${businessSlug}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.items && data.items.length > 0) {
+            setBusiness(data.items[0])
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch business:', err)
+      } finally {
+        setIsFetchingBusiness(false)
+      }
+    }
+    
+    if (businessSlug) {
+      fetchBusiness()
+    }
+  }, [businessSlug])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +71,12 @@ export default function LeaveReviewPage({ params }: LeaveReviewPageProps) {
       return
     }
 
+    if (formData.title.length < 10) {
+      setError('Title must be at least 10 characters')
+      setIsLoading(false)
+      return
+    }
+
     if (formData.content.length < 50) {
       setError('Review must be at least 50 characters')
       setIsLoading(false)
@@ -49,29 +84,88 @@ export default function LeaveReviewPage({ params }: LeaveReviewPageProps) {
     }
 
     try {
-      // In production, this would POST to /api/reviews
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      router.push('/dashboard?review=submitted')
-    } catch {
-      setError('Failed to submit review. Please try again.')
+      // Get current user session (in production, this would come from auth context)
+      const userResponse = await fetch('/api/profile')
+      if (!userResponse.ok) {
+        // Redirect to login if not authenticated
+        router.push(`/login?redirect=/leave-review/${businessSlug}`)
+        return
+      }
+      
+      const userData = await userResponse.json()
+      
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userData.id,
+          businessId: business?.id,
+          rating,
+          title: formData.title,
+          content: formData.content,
+          pros: formData.pros || null,
+          cons: formData.cons || null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit review')
+      }
+
+      setSuccess(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit review. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
 
+  if (success) {
+    return (
+      <div className="min-h-screen bg-muted/30 py-8">
+        <div className="container-app max-w-2xl">
+          <Card className="text-center">
+            <CardContent className="p-8">
+              <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Review Submitted!</h2>
+              <p className="text-muted-foreground mb-6">
+                Thank you for your review. It will be visible after moderation.
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Link href={`/business/${businessSlug}`}>
+                  <Button variant="outline">View Business</Button>
+                </Link>
+                <Link href="/dashboard">
+                  <Button>Go to Dashboard</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-muted/30 py-8">
       <div className="container-app max-w-2xl">
-        <Link href="/search" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
+        <Link href={`/business/${businessSlug}`} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="h-4 w-4" />
-          Back to search
+          Back to business page
         </Link>
 
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Write a Review</CardTitle>
             <p className="text-muted-foreground mt-2">
-              Share your experience with <span className="font-semibold">{businessName}</span>
+              Share your experience with{' '}
+              <span className="font-semibold">
+                {isFetchingBusiness ? 'Loading...' : business?.name || 'this business'}
+              </span>
             </p>
           </CardHeader>
           <CardContent>
@@ -113,9 +207,10 @@ export default function LeaveReviewPage({ params }: LeaveReviewPageProps) {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   maxLength={200}
+                  required
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {formData.title.length}/200 characters
+                  {formData.title.length}/200 characters (minimum 10)
                 </p>
               </div>
 
@@ -129,6 +224,7 @@ export default function LeaveReviewPage({ params }: LeaveReviewPageProps) {
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   rows={6}
                   maxLength={5000}
+                  required
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   {formData.content.length}/5000 characters (minimum 50)
@@ -184,7 +280,7 @@ export default function LeaveReviewPage({ params }: LeaveReviewPageProps) {
                   type="submit"
                   className="flex-1"
                   loading={isLoading}
-                  disabled={rating === 0 || formData.content.length < 50}
+                  disabled={rating === 0 || formData.title.length < 10 || formData.content.length < 50}
                 >
                   Submit Review
                 </Button>
