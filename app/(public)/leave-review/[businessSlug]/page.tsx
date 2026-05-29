@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Star, AlertCircle, CheckCircle } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { ArrowLeft, Star, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,6 +24,7 @@ interface Business {
 export default function LeaveReviewPage() {
   const router = useRouter()
   const params = useParams()
+  const { data: session, status: sessionStatus } = useSession()
   const businessSlug = params.businessSlug as string
   
   const [isLoading, setIsLoading] = useState(false)
@@ -54,6 +56,9 @@ export default function LeaveReviewPage() {
             if (biz.approvalStatus !== 'APPROVED') {
               setNotAllowed(true)
             }
+          } else {
+            // Business not found
+            setBusiness(null)
           }
         }
       } catch (err) {
@@ -91,22 +96,18 @@ export default function LeaveReviewPage() {
       return
     }
 
+    // Check if user is authenticated
+    if (!session?.user) {
+      router.push(`/login?redirect=/leave-review/${businessSlug}`)
+      return
+    }
+    
     try {
-      // Get current user session (in production, this would come from auth context)
-      const userResponse = await fetch('/api/profile')
-      if (!userResponse.ok) {
-        // Redirect to login if not authenticated
-        router.push(`/login?redirect=/leave-review/${businessSlug}`)
-        return
-      }
-      
-      const userData = await userResponse.json()
-      
       const response = await fetch('/api/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: userData.id,
+          userId: session.user.id,
           businessId: business?.id,
           rating,
           title: formData.title,
@@ -158,13 +159,13 @@ export default function LeaveReviewPage() {
     )
   }
 
-  if (isFetchingBusiness) {
+  if (sessionStatus === 'loading' || isFetchingBusiness) {
     return (
       <div className="min-h-screen bg-muted/30 py-8">
         <div className="container-app max-w-2xl">
           <Card className="text-center">
             <CardContent className="p-8">
-              <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
               <p className="text-muted-foreground">Loading...</p>
             </CardContent>
           </Card>
@@ -184,7 +185,7 @@ export default function LeaveReviewPage() {
               </div>
               <h2 className="text-2xl font-bold mb-2">Business Not Found</h2>
               <p className="text-muted-foreground mb-6">
-                The business you are looking for does not exist.
+                The business you are looking for does not exist or has not been approved.
               </p>
               <Link href="/search">
                 <Button>Browse Businesses</Button>

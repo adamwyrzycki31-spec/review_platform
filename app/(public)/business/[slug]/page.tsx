@@ -99,7 +99,13 @@ async function getBusiness(slug: string): Promise<BusinessData | null> {
     },
   })
 
-  return business as BusinessData | null
+  if (!business) return null
+
+  // Convert Prisma Decimal to number for Client Components
+  return {
+    ...business,
+    trustScore: Number(business.trustScore),
+  }
 }
 
 export async function generateMetadata({ params }: BusinessPageProps): Promise<Metadata> {
