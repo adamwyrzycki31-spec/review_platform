@@ -36,8 +36,6 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search') || ''
-    const status = searchParams.get('status') || ''
-    const trafficLight = searchParams.get('trafficLight') || ''
     const tab = searchParams.get('tab') || 'all'
 
     // Build where clause
@@ -51,19 +49,12 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    if (status && status !== 'all') {
-      where.subscriptionStatus = status
-    }
-
-    if (trafficLight && trafficLight !== 'all') {
-      where.trafficLightStatus = trafficLight
-    }
-
+    // Tab filters - map tab values to where conditions
     if (tab && tab !== 'all') {
       const tabFilters: Record<string, any> = {
-        pending: { trafficLightStatus: 'RED' },
         verified: { trafficLightStatus: 'GREEN' },
         amber: { trafficLightStatus: 'AMBER' },
+        pending: { trafficLightStatus: 'RED' },
         subscribed: { subscriptionStatus: 'ACTIVE' },
       }
       if (tabFilters[tab]) {
@@ -113,26 +104,16 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
-    // Get stats
+    // Get stats - count by traffic light status
     const trafficLightStats = await prisma.business.groupBy({
       by: ['trafficLightStatus'],
       _count: { trafficLightStatus: true },
     })
 
-    const subscriptionStats = await prisma.business.groupBy({
-      by: ['subscriptionStatus'],
-      _count: { subscriptionStatus: true },
-    })
-
     const totalCount = await prisma.business.count()
 
-    const trafficLightMap = trafficLightStats.reduce((acc, item) => {
+    const statsMap = trafficLightStats.reduce((acc, item) => {
       acc[item.trafficLightStatus] = item._count.trafficLightStatus
-      return acc
-    }, {} as Record<string, number>)
-
-    const subscriptionMap = subscriptionStats.reduce((acc, item) => {
-      acc[item.subscriptionStatus] = item._count.subscriptionStatus
       return acc
     }, {} as Record<string, number>)
 
@@ -140,11 +121,9 @@ export async function GET(request: NextRequest) {
       businesses,
       stats: {
         total: totalCount,
-        green: trafficLightMap['GREEN'] || 0,
-        amber: trafficLightMap['AMBER'] || 0,
-        red: trafficLightMap['RED'] || 0,
-        active: subscriptionMap['ACTIVE'] || 0,
-        expired: subscriptionMap['EXPIRED'] || 0,
+        green: statsMap['GREEN'] || 0,
+        amber: statsMap['AMBER'] || 0,
+        red: statsMap['RED'] || 0,
       },
     })
   } catch (error) {

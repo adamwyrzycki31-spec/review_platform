@@ -58,8 +58,6 @@ interface Stats {
   green: number
   amber: number
   red: number
-  active: number
-  expired: number
 }
 
 const defaultStats: Stats = {
@@ -67,8 +65,6 @@ const defaultStats: Stats = {
   green: 0,
   amber: 0,
   red: 0,
-  active: 0,
-  expired: 0,
 }
 
 const statusColors: Record<string, string> = {
@@ -307,41 +303,57 @@ export default function AdminBusinessesPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
-          <Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card className={stats.green > 0 ? 'border-green-200 bg-green-50/50' : ''}>
             <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Total Businesses</p>
-              <p className="text-2xl font-bold">{stats.total}</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">✓</span>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Verified</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.green}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className={stats.amber > 0 ? 'border-yellow-200 bg-yellow-50/50' : ''}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">!</span>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Amber</p>
+                  <p className="text-2xl font-bold text-yellow-600">{stats.amber}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className={stats.red > 0 ? 'border-red-200 bg-red-50/50' : ''}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">✗</span>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending</p>
+                  <p className="text-2xl font-bold text-red-500">{stats.red}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-sm text-green-600">Verified</p>
-              <p className="text-2xl font-bold text-green-600">{stats.green}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-yellow-600">Amber</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.amber}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-red-500">Pending</p>
-              <p className="text-2xl font-bold text-red-500">{stats.red}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Active Subs</p>
-              <p className="text-2xl font-bold">{stats.active}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Expired Subs</p>
-              <p className="text-2xl font-bold">{stats.expired}</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -369,7 +381,6 @@ export default function AdminBusinessesPage() {
                 <TabsTrigger value="verified">Verified</TabsTrigger>
                 <TabsTrigger value="amber">Amber</TabsTrigger>
                 <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="subscribed">Subscribed</TabsTrigger>
               </TabsList>
 
               <TabsContent value={activeTab} className="mt-0">
@@ -396,11 +407,10 @@ export default function AdminBusinessesPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Business</TableHead>
-                          <TableHead>Traffic Light</TableHead>
-                          <TableHead>Subscription</TableHead>
-                          <TableHead>Trust Score</TableHead>
+                          <TableHead>Trust Level</TableHead>
+                          <TableHead>Created</TableHead>
                           <TableHead>Reviews</TableHead>
-                          <TableHead>Status</TableHead>
+                          <TableHead>Verified</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -438,13 +448,8 @@ export default function AdminBusinessesPage() {
                                 {business.trafficLightStatus}
                               </Badge>
                             </TableCell>
-                            <TableCell>
-                              <Badge className={statusColors[business.subscriptionStatus] || 'bg-gray-500/10 text-gray-500'}>
-                                {business.subscriptionTier} / {business.subscriptionStatus}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <span className="font-medium">{Number(business.trustScore).toFixed(1)}</span>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {formatDate(business.createdAt)}
                             </TableCell>
                             <TableCell>
                               <span className="font-medium">{business.reviewCount}</span>
