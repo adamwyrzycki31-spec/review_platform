@@ -30,10 +30,11 @@ export async function GET(request: NextRequest) {
     // Tab filters - map tab values to where conditions
     if (tab && tab !== 'all') {
       const tabFilters: Record<string, any> = {
-        pending: { verifiedAt: null }, // Only filter by verified status
-        green: { trafficLightStatus: 'GREEN', verifiedAt: { not: null } },
-        amber: { trafficLightStatus: 'AMBER', verifiedAt: { not: null } },
-        red: { trafficLightStatus: 'RED', verifiedAt: { not: null } },
+        pending: { approvalStatus: 'PENDING' },
+        approved: { approvalStatus: 'APPROVED', trafficLightStatus: 'GREEN' },
+        approved_amber: { approvalStatus: 'APPROVED', trafficLightStatus: 'AMBER' },
+        approved_red: { approvalStatus: 'APPROVED', trafficLightStatus: 'RED' },
+        rejected: { approvalStatus: 'REJECTED' },
       }
       if (tabFilters[tab]) {
         Object.assign(where, tabFilters[tab])
@@ -58,6 +59,10 @@ export async function GET(request: NextRequest) {
         subscriptionTier: true,
         subscriptionStatus: true,
         trafficLightStatus: true,
+        approvalStatus: true,
+        approvedAt: true,
+        rejectedAt: true,
+        rejectionReason: true,
         insuranceUrl: true,
         termsUrl: true,
         promisePageUrl: true,
@@ -82,22 +87,28 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
-    // Get stats - count pending (not verified) and by traffic light status
+    // Get stats - count by approvalStatus and trafficLightStatus for approved
     const totalCount = await prisma.business.count()
     
-    // Count verified businesses by traffic light status
+    // Count by approval status
+    const approvalStatusCounts = await prisma.business.groupBy({
+      by: ['approvalStatus'],
+      _count: { approvalStatus: true },
+    })
+    
+    // Count approved businesses by traffic light status
     const trafficLightStats = await prisma.business.groupBy({
       by: ['trafficLightStatus'],
-      where: { verifiedAt: { not: null } },
+      where: { approvalStatus: 'APPROVED' },
       _count: { trafficLightStatus: true },
     })
 
-    // Count pending (not verified)
-    const pendingCount = await prisma.business.count({
-      where: { verifiedAt: null },
-    })
+    const approvalMap = approvalStatusCounts.reduce((acc, item) => {
+      acc[item.approvalStatus] = item._count.approvalStatus
+      return acc
+    }, {} as Record<string, number>)
 
-    const statsMap = trafficLightStats.reduce((acc, item) => {
+    const trafficMap = trafficLightStats.reduce((acc, item) => {
       acc[item.trafficLightStatus] = item._count.trafficLightStatus
       return acc
     }, {} as Record<string, number>)
@@ -106,10 +117,12 @@ export async function GET(request: NextRequest) {
       businesses,
       stats: {
         total: totalCount,
-        pending: pendingCount,
-        green: statsMap['GREEN'] || 0,
-        amber: statsMap['AMBER'] || 0,
-        red: statsMap['RED'] || 0,
+        pending: approvalMap['PENDING'] || 0,
+        approved: approvalMap['APPROVED'] || 0,
+        rejected: approvalMap['REJECTED'] || 0,
+        green: trafficMap['GREEN'] || 0,
+        amber: trafficMap['AMBER'] || 0,
+        red: trafficMap['RED'] || 0,
       },
     })
   } catch (error) {
@@ -154,8 +167,8 @@ export async function POST(request: NextRequest) {
             city: data.city || '',
             country: data.country || '',
             phone: data.phone || '',
-            trafficLightStatus: 'PENDING', // Default to PENDING
-            verifiedAt: null, // Not verified until admin approves
+            trafficLightStatus: 'PENDING',
+            approvalStatus: 'PENDING',
           },
         })
 
@@ -209,15 +222,35 @@ export async function POST(request: NextRequest) {
         if (!businessId) {
           return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
         }
-        // Mark business as verified AND set traffic light to RED (requires admin to set proper level)
+        // Approve business - set approvalStatus to APPROVED, trafficLightStatus to RED
         const verifiedBusiness = await prisma.business.update({
           where: { id: businessId },
           data: {
-            verifiedAt: new Date(),
-            trafficLightStatus: 'RED', // Set to RED, admin must set proper level
+            approvalStatus: 'APPROVED',
+            approvedAt: new Date(),
+            trafficLightStatus: 'RED',
+            rejectedAt: null,
+            rejectionReason: null,
           },
         })
         return NextResponse.json({ success: true, business: verifiedBusiness })
+      }
+
+      case 'reject': {
+        if (!businessId) {
+          return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
+        }
+        // Reject business
+        const rejectedBusiness = await prisma.business.update({
+          where: { id: businessId },
+          data: {
+            approvalStatus: 'REJECTED',
+            rejectedAt: new Date(),
+            rejectionReason: data.reason || 'No reason provided',
+            approvedAt: null,
+          },
+        })
+        return NextResponse.json({ success: true, business: rejectedBusiness })
       }
 
       case 'set-green': {

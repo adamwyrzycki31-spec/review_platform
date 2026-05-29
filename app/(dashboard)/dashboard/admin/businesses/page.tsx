@@ -36,6 +36,10 @@ interface Business {
   subscriptionTier: string
   subscriptionStatus: string
   trafficLightStatus: string
+  approvalStatus: string
+  approvedAt: Date | null
+  rejectedAt: Date | null
+  rejectionReason: string | null
   insuranceUrl: string | null
   termsUrl: string | null
   promisePageUrl: string | null
@@ -56,6 +60,8 @@ interface Business {
 interface Stats {
   total: number
   pending: number
+  approved: number
+  rejected: number
   green: number
   amber: number
   red: number
@@ -64,6 +70,8 @@ interface Stats {
 const defaultStats: Stats = {
   total: 0,
   pending: 0,
+  approved: 0,
+  rejected: 0,
   green: 0,
   amber: 0,
   red: 0,
@@ -225,6 +233,12 @@ export default function AdminBusinessesPage() {
           break
         case 'delete':
         case 'verify':
+        case 'reject':
+          body.businessId = selectedBusiness?.id
+          if (actionType === 'reject') {
+            body.data = { reason: editForm.rejectionReason || 'No reason provided' }
+          }
+          break
         case 'set-green':
         case 'set-amber':
         case 'set-red':
@@ -308,7 +322,7 @@ export default function AdminBusinessesPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
           <Card className={stats.pending > 0 ? 'border-orange-200 bg-orange-50/50' : ''}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -318,6 +332,32 @@ export default function AdminBusinessesPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Pending</p>
                   <p className="text-2xl font-bold text-orange-500">{stats.pending}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className={stats.approved > 0 ? 'border-green-200 bg-green-50/50' : ''}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                  <span className="text-white font-bold">A</span>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Approved</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className={stats.rejected > 0 ? 'border-red-200 bg-red-50/50' : ''}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+                  <span className="text-white font-bold">X</span>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Rejected</p>
+                  <p className="text-2xl font-bold text-red-500">{stats.rejected}</p>
                 </div>
               </div>
             </CardContent>
@@ -361,19 +401,10 @@ export default function AdminBusinessesPage() {
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total</p>
-                  <p className="text-2xl font-bold">{stats.total}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        </div>
+        
+        <div className="text-sm text-muted-foreground mb-4">
+          Green/Amber/Red = Traffic light status of <b>approved</b> businesses | Total: {stats.total}
         </div>
 
         {/* Content */}
@@ -405,9 +436,8 @@ export default function AdminBusinessesPage() {
                     </span>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="green">Green</TabsTrigger>
-                <TabsTrigger value="amber">Amber</TabsTrigger>
-                <TabsTrigger value="red">Red</TabsTrigger>
+                <TabsTrigger value="approved">Approved ({stats.approved})</TabsTrigger>
+                <TabsTrigger value="rejected">Rejected ({stats.rejected})</TabsTrigger>
               </TabsList>
 
               <TabsContent value={activeTab} className="mt-0">
@@ -434,10 +464,10 @@ export default function AdminBusinessesPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Business</TableHead>
-                          <TableHead>Trust Level</TableHead>
-                          <TableHead>Verified</TableHead>
-                          <TableHead>Reviews</TableHead>
+                          <TableHead>Approval</TableHead>
+                          <TableHead>Traffic Light</TableHead>
                           <TableHead>Created</TableHead>
+                          <TableHead>Reviews</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -468,23 +498,23 @@ export default function AdminBusinessesPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              {/* Show PENDING if not verified, otherwise show actual trust level */}
-                              <Badge className={business.verifiedAt ? trafficLightColors[business.trafficLightStatus] : 'bg-orange-500/10 text-orange-500 border-orange-500/20'}>
-                                {business.verifiedAt ? business.trafficLightStatus : 'PENDING'}
+                              {/* Show approval status badge */}
+                              <Badge className={
+                                business.approvalStatus === 'APPROVED' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                business.approvalStatus === 'REJECTED' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                'bg-orange-500/10 text-orange-500 border-orange-500/20'
+                              }>
+                                {business.approvalStatus}
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              {/* Verified status */}
-                              {business.verifiedAt ? (
-                                <span className="inline-flex items-center text-green-600 text-sm">
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  Verified
-                                </span>
+                              {/* Show traffic light status for approved businesses */}
+                              {business.approvalStatus === 'APPROVED' ? (
+                                <Badge className={trafficLightColors[business.trafficLightStatus]}>
+                                  {business.trafficLightStatus}
+                                </Badge>
                               ) : (
-                                <span className="inline-flex items-center text-orange-600 text-sm">
-                                  <AlertCircle className="h-3 w-3 mr-1" />
-                                  Pending
-                                </span>
+                                <span className="text-muted-foreground text-sm">—</span>
                               )}
                             </TableCell>
                             <TableCell>
@@ -513,14 +543,19 @@ export default function AdminBusinessesPage() {
                                     <Edit className="h-4 w-4 mr-2" />
                                     Edit Business
                                   </DropdownMenuItem>
-                                  {!business.verifiedAt && (
-                                    <DropdownMenuItem onClick={() => handleAction('verify', business)}>
-                                      <CheckCircle className="h-4 w-4 mr-2" />
-                                      Verify Business
-                                    </DropdownMenuItem>
+                                  {business.approvalStatus === 'PENDING' && (
+                                    <>
+                                      <DropdownMenuItem onClick={() => handleAction('verify', business)} className="text-green-600">
+                                        <CheckCircle className="h-4 w-4 mr-2" />
+                                        Approve Business
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleAction('reject', business)} className="text-red-600">
+                                        <XCircle className="h-4 w-4 mr-2" />
+                                        Reject Business
+                                      </DropdownMenuItem>
+                                    </>
                                   )}
-                                  {/* Trust level changes only available for verified businesses */}
-                                  {business.verifiedAt && (
+                                  {business.approvalStatus === 'APPROVED' && business.trafficLightStatus !== 'PENDING' && (
                                     <>
                                       <DropdownMenuSeparator />
                                       <DropdownMenuLabel className="text-xs text-muted-foreground">Change Trust Level</DropdownMenuLabel>
@@ -740,12 +775,31 @@ export default function AdminBusinessesPage() {
             </div>
           )}
 
-          {/* Verify Business */}
+          {/* Approve Business */}
           {actionType === 'verify' && (
             <div className="py-4">
               <p className="text-sm text-muted-foreground">
-                Verify {selectedBusiness?.name}. The trust level will be set to RED, and you can then change it to Green, Amber, or Red based on your assessment.
+                Approve {selectedBusiness?.name}. Their trust level will start as RED.
               </p>
+            </div>
+          )}
+
+          {/* Reject Business */}
+          {actionType === 'reject' && (
+            <div className="py-4 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Reject {selectedBusiness?.name}. Please provide a reason.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="rejectionReason">Rejection Reason</Label>
+                <Textarea
+                  id="rejectionReason"
+                  value={editForm.rejectionReason || ''}
+                  onChange={(e) => setEditForm({ ...editForm, rejectionReason: e.target.value })}
+                  placeholder="Provide a reason for rejection..."
+                  className="min-h-[100px]"
+                />
+              </div>
             </div>
           )}
 
@@ -765,7 +819,7 @@ export default function AdminBusinessesPage() {
             <Button 
               onClick={executeAction} 
               disabled={isProcessing || (actionType === 'create' && !addForm.name)}
-              variant={actionType === 'delete' ? 'destructive' : 'default'}
+              variant={actionType === 'delete' || actionType === 'reject' ? 'destructive' : 'default'}
             >
               {isProcessing ? (
                 <>
@@ -775,10 +829,12 @@ export default function AdminBusinessesPage() {
               ) : actionType === 'create' ? 'Create Business' :
                  actionType === 'edit' ? 'Save Changes' :
                  actionType === 'delete' ? 'Delete Business' :
+                 actionType === 'verify' ? 'Approve Business' :
+                 actionType === 'reject' ? 'Reject Business' :
                  actionType === 'set-green' ? 'Set Green' :
                  actionType === 'set-amber' ? 'Set Amber' :
                  actionType === 'set-red' ? 'Set Red' :
-                 'Verify Business'}
+                 'Confirm'}
             </Button>
           </DialogFooter>
         </DialogContent>
