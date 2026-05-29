@@ -5,6 +5,13 @@ import bcrypt from 'bcryptjs'
 import prisma from './db'
 import type { UserRole } from '@/types'
 
+// Validate required environment variables
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET
+if (!NEXTAUTH_SECRET) {
+  console.warn('⚠️ WARNING: NEXTAUTH_SECRET is not set. Auth will not work correctly.')
+  console.warn('⚠️ Generate one with: openssl rand -base64 32')
+}
+
 declare module 'next-auth' {
   interface Session {
     user: {
@@ -41,6 +48,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  secret: NEXTAUTH_SECRET,
   pages: {
     signIn: '/login',
     newUser: '/signup',
@@ -58,36 +66,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-          include: {
-            business: { select: { id: true } },
-            reseller: { select: { id: true } },
-          },
-        })
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email as string },
+            include: {
+              business: { select: { id: true } },
+              reseller: { select: { id: true } },
+            },
+          })
 
-        if (!user || !user.passwordHash) {
+          if (!user || !user.passwordHash) {
+            return null
+          }
+
+          const isValid = await bcrypt.compare(
+            credentials.password as string,
+            user.passwordHash
+          )
+
+          if (!isValid) {
+            return null
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            role: user.role as UserRole,
+            firstName: user.firstName || undefined,
+            lastName: user.lastName || undefined,
+            avatarUrl: user.avatarUrl || undefined,
+            businessId: user.business?.id,
+            resellerId: user.reseller?.id,
+          }
+        } catch (error) {
+          console.error('Auth authorize error:', error)
           return null
-        }
-
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash
-        )
-
-        if (!isValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          role: user.role as UserRole,
-          firstName: user.firstName || undefined,
-          lastName: user.lastName || undefined,
-          avatarUrl: user.avatarUrl || undefined,
-          businessId: user.business?.id,
-          resellerId: user.reseller?.id,
         }
       },
     }),
@@ -110,6 +123,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.resellerId = token.resellerId
       }
       return session
+    },
+  },
+  logger: {
+    error: (error) => {
+      console.error('[auth][error]', error)
+    },
+    warn: (warning) => {
+      console.warn('[auth][warn]', warning)
+    },
+    debug: (message) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('[auth][debug]', message)
+      }
     },
   },
 })

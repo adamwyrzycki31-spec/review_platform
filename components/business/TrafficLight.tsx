@@ -27,6 +27,13 @@ export function TrafficLightIndicator({
   }
 
   const colors = {
+    PENDING: {
+      bg: 'bg-orange-500',
+      icon: Shield,
+      label: 'Pending',
+      shadow: 'shadow-orange-500/50',
+      gradient: 'from-orange-500 to-yellow-500',
+    },
     GREEN: {
       bg: 'bg-green-500',
       icon: ShieldCheck,
@@ -50,7 +57,7 @@ export function TrafficLightIndicator({
     },
   }
 
-  const config = colors[status]
+  const config = colors[status] || colors.PENDING
   const Icon = config.icon
 
   return (
@@ -82,21 +89,26 @@ interface TrafficLightBadgeProps {
 }
 
 export function TrafficLightBadge({ status, className }: TrafficLightBadgeProps) {
-  const colors = {
+  const colors: Record<string, string> = {
+    PENDING: 'bg-orange-500 text-white',
     GREEN: 'bg-green-500 text-white',
     AMBER: 'bg-amber-500 text-black',
     RED: 'bg-red-500 text-white',
   }
 
-  const labels = {
+  const labels: Record<string, string> = {
+    PENDING: '⏳ Pending',
     GREEN: '✓ Trusted',
     AMBER: '⚠ Partial',
     RED: '✕ Untrusted',
   }
 
+  const color = colors[status] || colors.PENDING
+  const label = labels[status] || 'Pending'
+
   return (
-    <span className={cn("inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold", colors[status], className)}>
-      {labels[status]}
+    <span className={cn("inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold", color, className)}>
+      {label}
     </span>
   )
 }

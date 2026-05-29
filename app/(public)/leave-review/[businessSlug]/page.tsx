@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Star, AlertCircle, CheckCircle } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { ArrowLeft, Star, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,11 +18,13 @@ interface Business {
   name: string
   slug: string
   logoUrl: string | null
+  approvalStatus: string
 }
 
 export default function LeaveReviewPage() {
   const router = useRouter()
   const params = useParams()
+  const { data: session, status: sessionStatus } = useSession()
   const businessSlug = params.businessSlug as string
   
   const [isLoading, setIsLoading] = useState(false)
@@ -29,6 +32,7 @@ export default function LeaveReviewPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [business, setBusiness] = useState<Business | null>(null)
+  const [notAllowed, setNotAllowed] = useState(false)
   const [rating, setRating] = useState(0)
   const [formData, setFormData] = useState({
     title: '',
@@ -45,7 +49,16 @@ export default function LeaveReviewPage() {
         if (response.ok) {
           const data = await response.json()
           if (data.items && data.items.length > 0) {
-            setBusiness(data.items[0])
+            const biz = data.items[0]
+            setBusiness(biz)
+            
+            // Check if business is approved
+            if (biz.approvalStatus !== 'APPROVED') {
+              setNotAllowed(true)
+            }
+          } else {
+            // Business not found
+            setBusiness(null)
           }
         }
       } catch (err) {
@@ -83,22 +96,18 @@ export default function LeaveReviewPage() {
       return
     }
 
+    // Check if user is authenticated
+    if (!session?.user) {
+      router.push(`/login?redirect=/leave-review/${businessSlug}`)
+      return
+    }
+    
     try {
-      // Get current user session (in production, this would come from auth context)
-      const userResponse = await fetch('/api/profile')
-      if (!userResponse.ok) {
-        // Redirect to login if not authenticated
-        router.push(`/login?redirect=/leave-review/${businessSlug}`)
-        return
-      }
-      
-      const userData = await userResponse.json()
-      
       const response = await fetch('/api/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: userData.id,
+          userId: session.user.id,
           businessId: business?.id,
           rating,
           title: formData.title,
@@ -120,6 +129,72 @@ export default function LeaveReviewPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (notAllowed) {
+    return (
+      <div className="min-h-screen bg-muted/30 py-8">
+        <div className="container-app max-w-2xl">
+          <Card className="text-center">
+            <CardContent className="p-8">
+              <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center mx-auto mb-6">
+                <AlertCircle className="w-8 h-8 text-yellow-500" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Review Not Available</h2>
+              <p className="text-muted-foreground mb-6">
+                Reviews cannot be submitted for this business as it has not been approved yet.
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Link href={`/business/${businessSlug}`}>
+                  <Button variant="outline">View Business</Button>
+                </Link>
+                <Link href="/search">
+                  <Button>Browse Businesses</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (sessionStatus === 'loading' || isFetchingBusiness) {
+    return (
+      <div className="min-h-screen bg-muted/30 py-8">
+        <div className="container-app max-w-2xl">
+          <Card className="text-center">
+            <CardContent className="p-8">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (!business) {
+    return (
+      <div className="min-h-screen bg-muted/30 py-8">
+        <div className="container-app max-w-2xl">
+          <Card className="text-center">
+            <CardContent className="p-8">
+              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-6">
+                <AlertCircle className="w-8 h-8 text-red-500" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Business Not Found</h2>
+              <p className="text-muted-foreground mb-6">
+                The business you are looking for does not exist or has not been approved.
+              </p>
+              <Link href="/search">
+                <Button>Browse Businesses</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   if (success) {

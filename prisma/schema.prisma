@@ -33,9 +33,16 @@ enum SubscriptionStatus {
 }
 
 enum TrafficLightStatus {
+  PENDING
   RED
   AMBER
   GREEN
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum ReviewStatus {
@@ -153,7 +160,11 @@ model Business {
   subscriptionTier      SubscriptionTier   @default(FREE) @map("subscription_tier")
   subscriptionStatus    SubscriptionStatus @default(EXPIRED) @map("subscription_status")
   subscriptionExpiresAt DateTime?          @map("subscription_expires_at")
-  trafficLightStatus    TrafficLightStatus @default(RED) @map("traffic_light_status")
+  trafficLightStatus    TrafficLightStatus @default(PENDING) @map("traffic_light_status")
+  approvalStatus       ApprovalStatus    @default(PENDING) @map("approval_status")
+  approvedAt           DateTime?         @map("approved_at")
+  rejectedAt           DateTime?         @map("rejected_at")
+  rejectionReason      String?           @map("rejection_reason")
   insuranceUrl          String?            @map("insurance_url")
   termsUrl              String?            @map("terms_url")
   promisePageUrl        String?            @map("promise_page_url")

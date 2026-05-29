@@ -62,7 +62,8 @@ interface BusinessData {
   businessEmail: string | null
   trustScore: unknown
   reviewCount: number
-  trafficLightStatus: 'RED' | 'AMBER' | 'GREEN'
+  trafficLightStatus: 'PENDING' | 'RED' | 'AMBER' | 'GREEN'
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
   insuranceUrl: string | null
   termsUrl: string | null
   promisePageUrl: string | null
@@ -98,7 +99,13 @@ async function getBusiness(slug: string): Promise<BusinessData | null> {
     },
   })
 
-  return business as BusinessData | null
+  if (!business) return null
+
+  // Convert Prisma Decimal to number for Client Components
+  return {
+    ...business,
+    trustScore: Number(business.trustScore),
+  }
 }
 
 export async function generateMetadata({ params }: BusinessPageProps): Promise<Metadata> {

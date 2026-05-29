@@ -23,7 +23,7 @@ export interface UserProfile extends User {
 // Business Types
 export type SubscriptionTier = 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE'
 export type SubscriptionStatus = 'ACTIVE' | 'CANCELLED' | 'PAST_DUE' | 'EXPIRED'
-export type TrafficLightStatus = 'RED' | 'AMBER' | 'GREEN'
+export type TrafficLightStatus = 'PENDING' | 'RED' | 'AMBER' | 'GREEN'
 
 export interface Business {
   id: string

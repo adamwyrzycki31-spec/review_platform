@@ -10,8 +10,16 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const trafficLight = searchParams.get('trafficLight')
     const search = searchParams.get('search')
+    const slug = searchParams.get('slug')
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = {
+      // Only show APPROVED businesses in public API
+      approvalStatus: 'APPROVED',
+    }
+
+    if (slug) {
+      where.slug = slug
+    }
 
     if (category) {
       where.category = { slug: category }
