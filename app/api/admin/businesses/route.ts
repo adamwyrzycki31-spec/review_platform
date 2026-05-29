@@ -28,13 +28,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Tab filters - map tab values to where conditions
-    // Pending = Red + not verified (new businesses need admin approval)
     if (tab && tab !== 'all') {
       const tabFilters: Record<string, any> = {
-        green: { trafficLightStatus: 'GREEN' },
-        amber: { trafficLightStatus: 'AMBER' },
-        red: { trafficLightStatus: 'RED' },
-        pending: { trafficLightStatus: 'RED', verifiedAt: null },
+        pending: { verifiedAt: null }, // Only filter by verified status
+        green: { trafficLightStatus: 'GREEN', verifiedAt: { not: null } },
+        amber: { trafficLightStatus: 'AMBER', verifiedAt: { not: null } },
+        red: { trafficLightStatus: 'RED', verifiedAt: { not: null } },
       }
       if (tabFilters[tab]) {
         Object.assign(where, tabFilters[tab])
@@ -83,13 +82,20 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
-    // Get stats - count by traffic light status
+    // Get stats - count pending (not verified) and by traffic light status
+    const totalCount = await prisma.business.count()
+    
+    // Count verified businesses by traffic light status
     const trafficLightStats = await prisma.business.groupBy({
       by: ['trafficLightStatus'],
+      where: { verifiedAt: { not: null } },
       _count: { trafficLightStatus: true },
     })
 
-    const totalCount = await prisma.business.count()
+    // Count pending (not verified)
+    const pendingCount = await prisma.business.count({
+      where: { verifiedAt: null },
+    })
 
     const statsMap = trafficLightStats.reduce((acc, item) => {
       acc[item.trafficLightStatus] = item._count.trafficLightStatus
@@ -100,6 +106,7 @@ export async function GET(request: NextRequest) {
       businesses,
       stats: {
         total: totalCount,
+        pending: pendingCount,
         green: statsMap['GREEN'] || 0,
         amber: statsMap['AMBER'] || 0,
         red: statsMap['RED'] || 0,
@@ -125,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'create': {
-        // Create a new business - default to RED (Pending) status
+        // Create a new business - default to PENDING status
         if (!data.name) {
           return NextResponse.json({ error: 'Business name is required' }, { status: 400 })
         }
@@ -147,7 +154,7 @@ export async function POST(request: NextRequest) {
             city: data.city || '',
             country: data.country || '',
             phone: data.phone || '',
-            trafficLightStatus: 'RED', // Default to Red (Pending)
+            trafficLightStatus: 'PENDING', // Default to PENDING
             verifiedAt: null, // Not verified until admin approves
           },
         })
@@ -202,11 +209,12 @@ export async function POST(request: NextRequest) {
         if (!businessId) {
           return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
         }
-        // Mark business as verified (sets verifiedAt but keeps traffic light status unchanged)
+        // Mark business as verified AND set traffic light to RED (requires admin to set proper level)
         const verifiedBusiness = await prisma.business.update({
           where: { id: businessId },
           data: {
             verifiedAt: new Date(),
+            trafficLightStatus: 'RED', // Set to RED, admin must set proper level
           },
         })
         return NextResponse.json({ success: true, business: verifiedBusiness })

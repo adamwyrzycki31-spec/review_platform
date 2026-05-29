@@ -33,6 +33,7 @@ enum SubscriptionStatus {
 }
 
 enum TrafficLightStatus {
+  PENDING
   RED
   AMBER
   GREEN
