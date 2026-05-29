@@ -100,6 +100,17 @@ export default function AdminBusinessesPage() {
     phone: '',
   })
 
+  // Add Business State
+  const [addForm, setAddForm] = useState({
+    name: '',
+    description: '',
+    website: '',
+    businessEmail: '',
+    city: '',
+    country: '',
+    phone: '',
+  })
+
   // Fetch businesses
   const fetchBusinesses = useCallback(async () => {
     setIsLoading(true)
@@ -164,6 +175,18 @@ export default function AdminBusinessesPage() {
       })
     }
     
+    if (action === 'create') {
+      setAddForm({
+        name: '',
+        description: '',
+        website: '',
+        businessEmail: '',
+        city: '',
+        country: '',
+        phone: '',
+      })
+    }
+    
     if (action === 'delete' && business) {
       if (!confirm(`Are you sure you want to delete ${business.name}? This action cannot be undone.`)) {
         return
@@ -179,6 +202,9 @@ export default function AdminBusinessesPage() {
       let body: any = { action: actionType }
 
       switch (actionType) {
+        case 'create':
+          body.data = addForm
+          break
         case 'update':
           body.businessId = selectedBusiness?.id
           body.data = editForm
@@ -208,6 +234,15 @@ export default function AdminBusinessesPage() {
       setIsDialogOpen(false)
       setSelectedBusiness(null)
       setActionType('')
+      setAddForm({
+        name: '',
+        description: '',
+        website: '',
+        businessEmail: '',
+        city: '',
+        country: '',
+        phone: '',
+      })
       setEditForm({
         name: '',
         description: '',
@@ -250,7 +285,7 @@ export default function AdminBusinessesPage() {
               <p className="text-muted-foreground">Manage all platform businesses</p>
             </div>
           </div>
-          <Button onClick={() => router.push('/dashboard/admin/businesses/new')}>
+          <Button onClick={() => handleAction('create')}>
             <Plus className="h-4 w-4 mr-2" />
             Add Business
           </Button>
@@ -466,11 +501,13 @@ export default function AdminBusinessesPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
+              {actionType === 'create' && 'Add New Business'}
               {actionType === 'edit' && 'Edit Business'}
               {actionType === 'delete' && 'Delete Business'}
               {actionType === 'verify' && 'Verify Business'}
             </DialogTitle>
             <DialogDescription>
+              {actionType === 'create' && 'Create a new business profile'}
               {actionType === 'edit' && `Editing ${selectedBusiness?.name}`}
               {actionType === 'delete' && `This will permanently delete ${selectedBusiness?.name}`}
               {actionType === 'verify' && `Verify ${selectedBusiness?.name}`}
@@ -548,6 +585,81 @@ export default function AdminBusinessesPage() {
             </div>
           )}
 
+          {/* Add Business Form */}
+          {actionType === 'create' && (
+            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+              <div className="space-y-2">
+                <Label htmlFor="addName">Business Name *</Label>
+                <Input
+                  id="addName"
+                  value={addForm.name}
+                  onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
+                  placeholder="Enter business name"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="addWebsite">Website</Label>
+                  <Input
+                    id="addWebsite"
+                    value={addForm.website}
+                    onChange={(e) => setAddForm({ ...addForm, website: e.target.value })}
+                    placeholder="https://example.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="addEmail">Business Email</Label>
+                  <Input
+                    id="addEmail"
+                    type="email"
+                    value={addForm.businessEmail}
+                    onChange={(e) => setAddForm({ ...addForm, businessEmail: e.target.value })}
+                    placeholder="contact@business.com"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="addPhone">Phone</Label>
+                  <Input
+                    id="addPhone"
+                    value={addForm.phone}
+                    onChange={(e) => setAddForm({ ...addForm, phone: e.target.value })}
+                    placeholder="+1 234 567 8900"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="addCountry">Country</Label>
+                  <Input
+                    id="addCountry"
+                    value={addForm.country}
+                    onChange={(e) => setAddForm({ ...addForm, country: e.target.value })}
+                    placeholder="United States"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="addCity">City</Label>
+                <Input
+                  id="addCity"
+                  value={addForm.city}
+                  onChange={(e) => setAddForm({ ...addForm, city: e.target.value })}
+                  placeholder="New York"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="addDescription">Description</Label>
+                <Textarea
+                  id="addDescription"
+                  value={addForm.description}
+                  onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
+                  placeholder="Describe the business..."
+                  className="min-h-[100px]"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Delete Confirmation */}
           {actionType === 'delete' && (
             <div className="py-4">
@@ -572,7 +684,7 @@ export default function AdminBusinessesPage() {
             </Button>
             <Button 
               onClick={executeAction} 
-              disabled={isProcessing}
+              disabled={isProcessing || (actionType === 'create' && !addForm.name)}
               variant={actionType === 'delete' ? 'destructive' : 'default'}
             >
               {isProcessing ? (
@@ -580,7 +692,8 @@ export default function AdminBusinessesPage() {
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Processing...
                 </>
-              ) : actionType === 'edit' ? 'Save Changes' :
+              ) : actionType === 'create' ? 'Create Business' :
+                 actionType === 'edit' ? 'Save Changes' :
                  actionType === 'delete' ? 'Delete Business' :
                  'Verify Business'}
             </Button>
