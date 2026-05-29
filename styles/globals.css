@@ -10,6 +10,10 @@
   --color-danger-foreground: rgb(255 255 255);
   --color-warning: rgb(245 158 11);
   --color-warning-foreground: rgb(0 0 0);
+  --color-destructive: rgb(239 68 68);
+  --color-destructive-foreground: rgb(255 255 255);
+  --color-success: rgb(34 197 94);
+  --color-success-foreground: rgb(255 255 255);
 
   /* Traffic Light Colors */
   --color-trust-green: rgb(34 197 94);
@@ -25,6 +29,12 @@
   --color-muted-foreground: rgb(100 116 139);
   --color-border: rgb(226 232 240);
   --color-input: rgb(226 232 240);
+  
+  /* Popover & Accent */
+  --color-popover: rgb(255 255 255);
+  --color-popover-foreground: rgb(15 23 42);
+  --color-accent: rgb(248 250 252);
+  --color-accent-foreground: rgb(15 23 42);
 
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
@@ -48,6 +58,14 @@
   --color-muted-foreground: rgb(148 163 184);
   --color-border: rgb(51 65 85);
   --color-input: rgb(51 65 85);
+  --color-popover: rgb(30 41 59);
+  --color-popover-foreground: rgb(248 250 252);
+  --color-accent: rgb(30 41 59);
+  --color-accent-foreground: rgb(248 250 252);
+  --color-destructive: rgb(239 68 68);
+  --color-destructive-foreground: rgb(255 255 255);
+  --color-success: rgb(34 197 94);
+  --color-success-foreground: rgb(255 255 255);
 }
 
 /* Base Styles */
