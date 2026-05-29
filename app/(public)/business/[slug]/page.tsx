@@ -62,7 +62,8 @@ interface BusinessData {
   businessEmail: string | null
   trustScore: unknown
   reviewCount: number
-  trafficLightStatus: 'RED' | 'AMBER' | 'GREEN'
+  trafficLightStatus: 'PENDING' | 'RED' | 'AMBER' | 'GREEN'
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
   insuranceUrl: string | null
   termsUrl: string | null
   promisePageUrl: string | null

@@ -32,12 +32,16 @@ interface BusinessSearchResult {
   country: string | null
   trustScore: unknown
   reviewCount: number
-  trafficLightStatus: 'RED' | 'AMBER' | 'GREEN'
+  trafficLightStatus: 'PENDING' | 'RED' | 'AMBER' | 'GREEN'
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
   category: { name: string } | null
 }
 
 async function SearchResults({ query, category, traffic }: { query?: string; category?: string; traffic?: string }) {
-  const where: Record<string, unknown> = {}
+  const where: Record<string, unknown> = {
+    // Only show APPROVED businesses in public search
+    approvalStatus: 'APPROVED',
+  }
 
   if (query) {
     where.OR = [
