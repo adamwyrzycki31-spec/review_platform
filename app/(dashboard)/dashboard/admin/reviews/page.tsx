@@ -102,7 +102,20 @@ export default function AdminReviewsPage() {
       if (response.ok) {
         const data = await response.json()
         setReviews(data.items || [])
-        
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [activeTab])
+
+  // Fetch all reviews for global stats (runs once on mount)
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/reviews?status=all')
+      if (response.ok) {
+        const data = await response.json()
         const allItems = data.items || []
         setStats({
           total: allItems.length,
@@ -113,15 +126,17 @@ export default function AdminReviewsPage() {
         })
       }
     } catch (error) {
-      console.error('Error fetching reviews:', error)
-    } finally {
-      setIsLoading(false)
+      console.error('Error fetching stats:', error)
     }
-  }, [activeTab])
+  }, [])
 
   useEffect(() => {
     fetchReviews()
   }, [fetchReviews])
+
+  useEffect(() => {
+    fetchStats()
+  }, [fetchStats])
 
   const handleAction = (action: string, review: Review) => {
     setSelectedReview(review)
@@ -175,6 +190,7 @@ export default function AdminReviewsPage() {
 
       if (response.ok) {
         await fetchReviews()
+        await fetchStats()
         setIsDialogOpen(false)
       } else {
         const data = await response.json()
@@ -227,7 +243,7 @@ export default function AdminReviewsPage() {
               <p className="text-muted-foreground">Review and moderate user reviews</p>
             </div>
           </div>
-          <Button variant="outline" onClick={fetchReviews} disabled={isLoading}>
+          <Button variant="outline" onClick={() => { fetchReviews(); fetchStats(); }} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
