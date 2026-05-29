@@ -3,28 +3,6 @@ import { auth } from '@/lib/auth'
 import prisma from '@/lib/db'
 import { v4 as uuidv4 } from 'uuid'
 
-// Helper function to update traffic signal record
-async function updateTraficSignalRecord(businessId: string, status: string) {
-  try {
-    const signal = await prisma.trafficSignal.findFirst({
-      where: { businessId },
-    })
-    if (signal) {
-      await prisma.trafficSignal.update({
-        where: { id: signal.id },
-        data: {
-          insuranceVerified: status === 'GREEN',
-          termsVerified: status === 'GREEN',
-          promisesVerified: status === 'GREEN',
-          overallStatus: status,
-        },
-      })
-    }
-  } catch (e) {
-    console.error('Error updating traffic signal:', e)
-  }
-}
-
 // GET /api/admin/businesses - List all businesses
 export async function GET(request: NextRequest) {
   try {
@@ -50,12 +28,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Tab filters - map tab values to where conditions
+    // Pending = Red + not verified (new businesses need admin approval)
     if (tab && tab !== 'all') {
       const tabFilters: Record<string, any> = {
-        verified: { trafficLightStatus: 'GREEN' },
+        green: { trafficLightStatus: 'GREEN' },
         amber: { trafficLightStatus: 'AMBER' },
-        pending: { trafficLightStatus: 'RED' },
-        subscribed: { subscriptionStatus: 'ACTIVE' },
+        red: { trafficLightStatus: 'RED' },
+        pending: { trafficLightStatus: 'RED', verifiedAt: null },
       }
       if (tabFilters[tab]) {
         Object.assign(where, tabFilters[tab])
@@ -146,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'create': {
-        // Create a new business
+        // Create a new business - default to RED (Pending) status
         if (!data.name) {
           return NextResponse.json({ error: 'Business name is required' }, { status: 400 })
         }
@@ -168,6 +147,8 @@ export async function POST(request: NextRequest) {
             city: data.city || '',
             country: data.country || '',
             phone: data.phone || '',
+            trafficLightStatus: 'RED', // Default to Red (Pending)
+            verifiedAt: null, // Not verified until admin approves
           },
         })
 
@@ -221,30 +202,46 @@ export async function POST(request: NextRequest) {
         if (!businessId) {
           return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
         }
-        // Mark business as verified
+        // Mark business as verified (sets verifiedAt but keeps traffic light status unchanged)
         const verifiedBusiness = await prisma.business.update({
           where: { id: businessId },
           data: {
             verifiedAt: new Date(),
-            trafficLightStatus: 'GREEN',
           },
         })
-        updateTraficSignalRecord(businessId, 'GREEN')
         return NextResponse.json({ success: true, business: verifiedBusiness })
       }
 
-      case 'update-traffic-light': {
+      case 'set-green': {
         if (!businessId) {
           return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
         }
-        // Update traffic light status
         const updatedBusiness = await prisma.business.update({
           where: { id: businessId },
-          data: {
-            trafficLightStatus: data.trafficLightStatus,
-          },
+          data: { trafficLightStatus: 'GREEN' },
         })
-        updateTraficSignalRecord(businessId, data.trafficLightStatus)
+        return NextResponse.json({ success: true, business: updatedBusiness })
+      }
+
+      case 'set-amber': {
+        if (!businessId) {
+          return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
+        }
+        const updatedBusiness = await prisma.business.update({
+          where: { id: businessId },
+          data: { trafficLightStatus: 'AMBER' },
+        })
+        return NextResponse.json({ success: true, business: updatedBusiness })
+      }
+
+      case 'set-red': {
+        if (!businessId) {
+          return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
+        }
+        const updatedBusiness = await prisma.business.update({
+          where: { id: businessId },
+          data: { trafficLightStatus: 'RED' },
+        })
         return NextResponse.json({ success: true, business: updatedBusiness })
       }
 

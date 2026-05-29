@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Building2, Search, Plus, AlertCircle, Loader2, Eye, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react'
+import { Building2, Search, Plus, AlertCircle, Loader2, Eye, Edit, Trash2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -222,11 +222,13 @@ export default function AdminBusinessesPage() {
           break
         case 'delete':
         case 'verify':
+        case 'set-green':
+        case 'set-amber':
+        case 'set-red':
           body.businessId = selectedBusiness?.id
-          break
-        case 'update-traffic-light':
-          body.businessId = selectedBusiness?.id
-          body.data = { trafficLightStatus: selectedBusiness?.trafficLightStatus }
+          if (actionType === 'set-green') body.data = { trafficLightStatus: 'GREEN' }
+          if (actionType === 'set-amber') body.data = { trafficLightStatus: 'AMBER' }
+          if (actionType === 'set-red') body.data = { trafficLightStatus: 'RED' }
           break
       }
 
@@ -308,10 +310,10 @@ export default function AdminBusinessesPage() {
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">✓</span>
+                  <span className="text-white font-bold">G</span>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Verified</p>
+                  <p className="text-sm text-muted-foreground">Green</p>
                   <p className="text-2xl font-bold text-green-600">{stats.green}</p>
                 </div>
               </div>
@@ -321,7 +323,7 @@ export default function AdminBusinessesPage() {
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">!</span>
+                  <span className="text-white font-bold">A</span>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Amber</p>
@@ -334,10 +336,10 @@ export default function AdminBusinessesPage() {
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">✗</span>
+                  <span className="text-white font-bold">R</span>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Pending</p>
+                  <p className="text-sm text-muted-foreground">Red</p>
                   <p className="text-2xl font-bold text-red-500">{stats.red}</p>
                 </div>
               </div>
@@ -378,9 +380,18 @@ export default function AdminBusinessesPage() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="mb-6">
                 <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="verified">Verified</TabsTrigger>
+                <TabsTrigger value="green">Green</TabsTrigger>
                 <TabsTrigger value="amber">Amber</TabsTrigger>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
+                <TabsTrigger value="red">Red</TabsTrigger>
+                <TabsTrigger value="pending" className="relative">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  Pending
+                  {stats.red > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {stats.red}
+                    </span>
+                  )}
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value={activeTab} className="mt-0">
@@ -441,11 +452,8 @@ export default function AdminBusinessesPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge className={trafficLightColors[business.trafficLightStatus] || 'bg-gray-500/10 text-gray-500'}>
-                                {business.trafficLightStatus === 'GREEN' && '● '}
-                                {business.trafficLightStatus === 'AMBER' && '● '}
-                                {business.trafficLightStatus === 'RED' && '● '}
-                                {business.trafficLightStatus}
+                              <Badge className={business.verifiedAt ? trafficLightColors[business.trafficLightStatus] : 'bg-orange-500/10 text-orange-500 border-orange-500/20'}>
+                                {!business.verifiedAt ? 'PENDING' : business.trafficLightStatus}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
@@ -494,6 +502,20 @@ export default function AdminBusinessesPage() {
                                     </DropdownMenuItem>
                                   )}
                                   <DropdownMenuSeparator />
+                                  <DropdownMenuLabel className="text-xs text-muted-foreground">Change Trust Level</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => handleAction('set-green', business)} className="text-green-600">
+                                    <span className="w-4 h-4 mr-2 rounded-full bg-green-500"></span>
+                                    Set Green
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleAction('set-amber', business)} className="text-yellow-600">
+                                    <span className="w-4 h-4 mr-2 rounded-full bg-yellow-500"></span>
+                                    Set Amber
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleAction('set-red', business)} className="text-red-600">
+                                    <span className="w-4 h-4 mr-2 rounded-full bg-red-500"></span>
+                                    Set Red
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
                                   <DropdownMenuItem 
                                     onClick={() => handleAction('delete', business)}
                                     className="text-destructive focus:text-destructive"
@@ -525,12 +547,18 @@ export default function AdminBusinessesPage() {
               {actionType === 'edit' && 'Edit Business'}
               {actionType === 'delete' && 'Delete Business'}
               {actionType === 'verify' && 'Verify Business'}
+              {actionType === 'set-green' && 'Set Green'}
+              {actionType === 'set-amber' && 'Set Amber'}
+              {actionType === 'set-red' && 'Set Red'}
             </DialogTitle>
             <DialogDescription>
               {actionType === 'create' && 'Create a new business profile'}
               {actionType === 'edit' && `Editing ${selectedBusiness?.name}`}
               {actionType === 'delete' && `This will permanently delete ${selectedBusiness?.name}`}
               {actionType === 'verify' && `Verify ${selectedBusiness?.name}`}
+              {actionType === 'set-green' && `Set trust level to Green for ${selectedBusiness?.name}`}
+              {actionType === 'set-amber' && `Set trust level to Amber for ${selectedBusiness?.name}`}
+              {actionType === 'set-red' && `Set trust level to Red for ${selectedBusiness?.name}`}
             </DialogDescription>
           </DialogHeader>
 
@@ -693,7 +721,16 @@ export default function AdminBusinessesPage() {
           {actionType === 'verify' && (
             <div className="py-4">
               <p className="text-sm text-muted-foreground">
-                Mark {selectedBusiness?.name} as verified. This will change their traffic light status to GREEN.
+                Mark {selectedBusiness?.name} as verified. This confirms the business is legitimate.
+              </p>
+            </div>
+          )}
+
+          {/* Set Traffic Light Status */}
+          {(actionType === 'set-green' || actionType === 'set-amber' || actionType === 'set-red') && (
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground">
+                Change the trust level for {selectedBusiness?.name}. This will update their displayed trust status.
               </p>
             </div>
           )}
@@ -715,6 +752,9 @@ export default function AdminBusinessesPage() {
               ) : actionType === 'create' ? 'Create Business' :
                  actionType === 'edit' ? 'Save Changes' :
                  actionType === 'delete' ? 'Delete Business' :
+                 actionType === 'set-green' ? 'Set Green' :
+                 actionType === 'set-amber' ? 'Set Amber' :
+                 actionType === 'set-red' ? 'Set Red' :
                  'Verify Business'}
             </Button>
           </DialogFooter>
