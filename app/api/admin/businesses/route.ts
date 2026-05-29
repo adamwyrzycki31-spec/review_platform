@@ -3,6 +3,28 @@ import { auth } from '@/lib/auth'
 import prisma from '@/lib/db'
 import { v4 as uuidv4 } from 'uuid'
 
+// Helper function to update traffic signal record
+async function updateTraficSignalRecord(businessId: string, status: string) {
+  try {
+    const signal = await prisma.trafficSignal.findFirst({
+      where: { businessId },
+    })
+    if (signal) {
+      await prisma.trafficSignal.update({
+        where: { id: signal.id },
+        data: {
+          insuranceVerified: status === 'GREEN',
+          termsVerified: status === 'GREEN',
+          promisesVerified: status === 'GREEN',
+          overallStatus: status,
+        },
+      })
+    }
+  } catch (e) {
+    console.error('Error updating traffic signal:', e)
+  }
+}
+
 // GET /api/admin/businesses - List all businesses
 export async function GET(request: NextRequest) {
   try {
@@ -146,6 +168,10 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'create': {
         // Create a new business
+        if (!data.name) {
+          return NextResponse.json({ error: 'Business name is required' }, { status: 400 })
+        }
+        
         const slug = data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
         
         // Check if slug exists
@@ -178,25 +204,33 @@ export async function POST(request: NextRequest) {
 
       case 'update': {
         // Update business
+        if (!businessId) {
+          return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
+        }
+        
+        const updateData: any = {}
+        if (data.name !== undefined) updateData.name = data.name
+        if (data.description !== undefined) updateData.description = data.description
+        if (data.website !== undefined) updateData.website = data.website
+        if (data.businessEmail !== undefined) updateData.businessEmail = data.businessEmail
+        if (data.city !== undefined) updateData.city = data.city
+        if (data.country !== undefined) updateData.country = data.country
+        if (data.phone !== undefined) updateData.phone = data.phone
+        if (data.insuranceUrl !== undefined) updateData.insuranceUrl = data.insuranceUrl
+        if (data.termsUrl !== undefined) updateData.termsUrl = data.termsUrl
+        if (data.promisePageUrl !== undefined) updateData.promisePageUrl = data.promisePageUrl
+
         const updatedBusiness = await prisma.business.update({
           where: { id: businessId },
-          data: {
-            name: data.name,
-            description: data.description,
-            website: data.website,
-            businessEmail: data.businessEmail,
-            city: data.city,
-            country: data.country,
-            phone: data.phone,
-            insuranceUrl: data.insuranceUrl,
-            termsUrl: data.termsUrl,
-            promisePageUrl: data.promisePageUrl,
-          },
+          data: updateData,
         })
         return NextResponse.json({ success: true, business: updatedBusiness })
       }
 
       case 'delete': {
+        if (!businessId) {
+          return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
+        }
         // Delete business
         await prisma.business.delete({
           where: { id: businessId },
@@ -205,6 +239,9 @@ export async function POST(request: NextRequest) {
       }
 
       case 'verify': {
+        if (!businessId) {
+          return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
+        }
         // Mark business as verified
         const verifiedBusiness = await prisma.business.update({
           where: { id: businessId },
@@ -213,10 +250,14 @@ export async function POST(request: NextRequest) {
             trafficLightStatus: 'GREEN',
           },
         })
+        updateTraficSignalRecord(businessId, 'GREEN')
         return NextResponse.json({ success: true, business: verifiedBusiness })
       }
 
       case 'update-traffic-light': {
+        if (!businessId) {
+          return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
+        }
         // Update traffic light status
         const updatedBusiness = await prisma.business.update({
           where: { id: businessId },
@@ -224,6 +265,7 @@ export async function POST(request: NextRequest) {
             trafficLightStatus: data.trafficLightStatus,
           },
         })
+        updateTraficSignalRecord(businessId, data.trafficLightStatus)
         return NextResponse.json({ success: true, business: updatedBusiness })
       }
 

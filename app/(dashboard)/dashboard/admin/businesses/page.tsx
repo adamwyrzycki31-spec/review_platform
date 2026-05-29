@@ -62,6 +62,15 @@ interface Stats {
   expired: number
 }
 
+const defaultStats: Stats = {
+  total: 0,
+  green: 0,
+  amber: 0,
+  red: 0,
+  active: 0,
+  expired: 0,
+}
+
 const statusColors: Record<string, string> = {
   ACTIVE: 'bg-green-500/10 text-green-500 border-green-500/20',
   EXPIRED: 'bg-red-500/10 text-red-500 border-red-500/20',
@@ -79,7 +88,7 @@ export default function AdminBusinessesPage() {
   const router = useRouter()
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([])
-  const [stats, setStats] = useState<Stats>({ total: 0, green: 0, amber: 0, red: 0, active: 0, expired: 0 })
+  const [stats, setStats] = useState<Stats>(defaultStats)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [isLoading, setIsLoading] = useState(true)
@@ -129,11 +138,17 @@ export default function AdminBusinessesPage() {
         throw new Error('Failed to fetch businesses')
       }
       const data = await response.json()
-      setBusinesses(data.businesses)
-      setFilteredBusinesses(data.businesses)
-      setStats(data.stats)
+      
+      if (data.error) {
+        throw new Error(data.error)
+      }
+      
+      setBusinesses(data.businesses || [])
+      setFilteredBusinesses(data.businesses || [])
+      setStats(data.stats || defaultStats)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load businesses')
+      setStats(defaultStats)
     } finally {
       setIsLoading(false)
     }
