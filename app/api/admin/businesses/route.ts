@@ -166,6 +166,13 @@ export async function POST(request: NextRequest) {
           },
         })
 
+        // Create traffic signal record
+        await prisma.trafficSignal.create({
+          data: {
+            businessId: newBusiness.id,
+          },
+        })
+
         return NextResponse.json({ success: true, business: newBusiness })
       }
 
