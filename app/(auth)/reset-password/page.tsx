@@ -20,12 +20,10 @@ export default function ResetPasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   
   const token = searchParams.get('token')
-  const email = searchParams.get('email')
   
   const [formData, setFormData] = useState({
-    email: email || '',
     token: token || '',
-    newPassword: '',
+    password: '',
     confirmPassword: '',
   })
 
@@ -34,26 +32,25 @@ export default function ResetPasswordPage() {
     setIsLoading(true)
     setError('')
 
-    if (formData.newPassword !== formData.confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
       setIsLoading(false)
       return
     }
 
-    if (formData.newPassword.length < 8) {
+    if (formData.password.length < 8) {
       setError('Password must be at least 8 characters')
       setIsLoading(false)
       return
     }
 
     try {
-      const response = await fetch('/api/auth/reset-password', {
+      const response = await fetch('/api/auth?action=reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: formData.email,
           token: formData.token,
-          newPassword: formData.newPassword,
+          password: formData.password,
         }),
       })
 
@@ -167,8 +164,8 @@ export default function ResetPasswordPage() {
                     id="newPassword"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Create a strong password"
-                    value={formData.newPassword}
-                    onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="pl-10"
                     required
                   />
